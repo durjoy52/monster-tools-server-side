@@ -17,6 +17,11 @@ async function run(){
     try{
         await client.connect()
         const productCollection = client.db('monster-tools').collection('products')
+
+        app.get('/products',async(req,res)=>{
+            const products = await productCollection.find().toArray()
+            res.send(products)
+        })
     }finally{
     }
 }
