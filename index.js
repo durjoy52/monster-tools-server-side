@@ -17,14 +17,29 @@ async function run(){
     try{
         await client.connect()
         const productCollection = client.db('monster-tools').collection('products')
+        const ordersCollection = client.db('monster-tools').collection('orders')
+        const reviewCollection = client.db('monster-tools').collection('reviews')
 
+        app.post('/orders',async(req,res)=>{
+          const orders = req.body
+          const result = await ordersCollection.insertOne(orders)
+          res.send(result)
+        })
+        app.post('/review',async(req,res)=>{
+          const review= req.body
+          const result = await reviewCollection.insertOne(review)
+          res.send(result)
+        })
+        app.get('/review',async(req,res)=>{
+          const result = await reviewCollection.find().toArray()
+          res.send(result)
+        })
         app.get('/products',async(req,res)=>{
             const products = await productCollection.find().toArray()
             res.send(products)
         })
         app.get('/products/:id',async(req,res)=>{
             const id = req.params.id
-            console.log(id)
             const filter = {_id:ObjectId(id)}
             const result = await productCollection.findOne(filter)
             res.send(result)
