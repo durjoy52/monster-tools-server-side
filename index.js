@@ -83,7 +83,7 @@ async function run(){
             const products = await productCollection.find().toArray()
             res.send(products)
         })
-        app.post('/products',async(req,res)=>{
+        app.post('/products',verifyJWT,async(req,res)=>{
           const product= req.body
           const result = await productCollection.insertOne(product)
           res.send(result)
