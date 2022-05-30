@@ -19,6 +19,7 @@ async function run(){
         const productCollection = client.db('monster-tools').collection('products')
         const ordersCollection = client.db('monster-tools').collection('orders')
         const reviewCollection = client.db('monster-tools').collection('reviews')
+        const userProfileCollection = client.db('monster-tools').collection('userProfile')
 
         app.post('/orders',async(req,res)=>{
           const orders = req.body
@@ -43,6 +44,17 @@ async function run(){
             const filter = {_id:ObjectId(id)}
             const result = await productCollection.findOne(filter)
             res.send(result)
+        })
+
+        app.post('/userProfile',async(req,res)=>{
+          const profile = req.body
+          const result = await userProfileCollection.insertOne(profile)
+          res.send(result)
+        })
+        app.get('/userProfile/:email',async(req,res)=>{
+          const email = req.params.email
+          const result = await userProfileCollection.findOne({email:email})
+          res.send(result)
         })
     }finally{
     }
