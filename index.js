@@ -26,6 +26,10 @@ async function run(){
           const result = await ordersCollection.insertOne(orders)
           res.send(result)
         })
+        app.get('/orders',async(req,res)=>{
+          const result = await ordersCollection.find().toArray()
+          res.send(result)
+        })
         app.post('/review',async(req,res)=>{
           const review= req.body
           const result = await reviewCollection.insertOne(review)
