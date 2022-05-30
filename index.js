@@ -79,7 +79,7 @@ async function run(){
           const result = await productCollection.updateOne(filter,updatedDoc,options)
           res.send(result)
         })
-        app.get('/products',verifyJWT,async(req,res)=>{
+        app.get('/products',async(req,res)=>{
             const products = await productCollection.find().toArray()
             res.send(products)
         })
