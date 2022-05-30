@@ -56,12 +56,12 @@ async function run(){
           res.send(result)
         })
         
-        app.post('/reviews',async(req,res)=>{
+        app.post('/reviews',verifyJWT,async(req,res)=>{
           const review= req.body
           const result = await reviewCollection.insertOne(review)
           res.send(result)
         })
-        app.get('/review',verifyJWT,async(req,res)=>{
+        app.get('/review',async(req,res)=>{
           const result = await reviewCollection.find().toArray()
           res.send(result)
         })
