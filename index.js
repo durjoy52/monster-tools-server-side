@@ -1,8 +1,10 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express')
 const cors = require('cors');
 require('dotenv').config()
 var jwt = require('jsonwebtoken');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const app = express()
 const port = process.env.PORT || 5000
 
@@ -37,22 +39,55 @@ async function run(){
         const reviewCollection = client.db('monster-tools').collection('reviews')
         const userProfileCollection = client.db('monster-tools').collection('userProfile')
         const userCollection = client.db('monster-tools').collection('users')
+        const paymentCollection = client.db('monster-tools').collection('payments')
 
-        app.put('/orders/:email',async(req,res)=>{
-          const email = req.params.email
+
+        app.post('/create-payment-intent',verifyJWT,async(req,res)=>{
+          const service = req.body
+          const price = service.totalPrice
+         if(price){
+          const amount = price * 100
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: "usd",
+            payment_method_types:['card']
+          });
+        res.send({clientSecret: paymentIntent.client_secret})
+         }
+        })
+        app.post('/orders',async(req,res)=>{
           const orders = req.body
-          const filter = {email:email}
-          const options = {upsert:true}
-          const updateDoc={
-            $set:orders
-          }
-          const result = await ordersCollection.updateOne(filter,updateDoc,options)
+          const result = await ordersCollection.insertOne(orders)
           res.send(result)
+        })
+        app.get('/order/:id',verifyJWT,async(req,res)=>{
+          const id = req.params.id;
+          const filter = {_id:ObjectId(id)}
+          const result = await ordersCollection.findOne(filter)
+          res.send(result)
+        })
+        app.patch('/order/:id',verifyJWT,async(req,res)=>{
+          const id = req.params.id;
+          const payment = req.body
+          const filter = {_id:ObjectId(id)}
+          const updatedDoc = {
+            $set:{
+              paid: true,
+              transactionId: payment.transactionId
+            }
+          }
+          const updateOrder = await ordersCollection.updateOne(filter,updatedDoc)
+          const result = await paymentCollection.insertOne(payment)
+          res.send(updatedDoc)
         })
         app.get('/orders/:email',verifyJWT,async(req,res)=>{
           const email = req.params.email;
           const filter = {email:email}
           const result = await ordersCollection.find(filter).toArray()
+          res.send(result)
+        })
+        app.get('/orders',verifyJWT,async(req,res)=>{
+          const result = await ordersCollection.find().toArray()
           res.send(result)
         })
         
@@ -88,10 +123,16 @@ async function run(){
           const result = await productCollection.insertOne(product)
           res.send(result)
         })
-        app.get('/products/:id',verifyJWT,async(req,res)=>{
+        app.get('/products/:id',async(req,res)=>{
             const id = req.params.id
             const filter = {_id:ObjectId(id)}
             const result = await productCollection.findOne(filter)
+            res.send(result)
+        })
+        app.delete('/product/:id',async(req,res)=>{
+            const id = req.params.id
+            const filter = {_id:ObjectId(id)}
+            const result = await productCollection.deleteOne(filter)
             res.send(result)
         })
 
@@ -116,6 +157,12 @@ async function run(){
           const email = req.params.email;
           const filter = {email:email}
           const result = await userCollection.deleteOne(filter)
+          res.send(result)
+        })
+        app.delete('/order/:id',verifyJWT,async(req,res)=>{
+          const id = req.params.id;
+          const filter = {_id:ObjectId(id)}
+          const result = await ordersCollection.deleteOne(filter)
           res.send(result)
         })
         app.put('/users/:email',async(req,res)=>{
