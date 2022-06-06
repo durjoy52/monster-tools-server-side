@@ -80,6 +80,19 @@ async function run(){
           const result = await paymentCollection.insertOne(payment)
           res.send(updatedDoc)
         })
+        app.put('/order/:id',verifyJWT,async(req,res)=>{
+          const {shipped} = req.body
+          const id = req.params.id;
+          const filter = {_id:ObjectId(id)}
+          const options = {upsert:true}
+          const updatedDoc = {
+            $set:{
+              shipped: shipped
+            }
+          }
+          const updateOrder = await ordersCollection.updateOne(filter,updatedDoc,options)
+          res.send(updateOrder)
+        })
         app.get('/orders/:email',verifyJWT,async(req,res)=>{
           const email = req.params.email;
           const filter = {email:email}
